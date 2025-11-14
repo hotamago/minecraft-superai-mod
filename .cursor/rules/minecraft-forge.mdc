@@ -1,0 +1,98 @@
+---
+globs: *.java
+description: Minecraft Forge mod development guidelines
+---
+
+# Minecraft Forge Development Guidelines
+
+## Mod Initialization
+
+The mod is initialized in [SuperAIMod.java](mdc:src/main/java/com/supermc/ai/SuperAIMod.java). Key points:
+
+- Use `@Mod` annotation with mod ID from [SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java)
+- Initialize configuration first via `SuperAIConfig.initialize()`
+- Validate configuration before proceeding
+- Use `@Mod.EventBusSubscriber` for client/server-specific initialization
+
+## Event Handling
+
+### Client vs Server
+- Use `@Mod.EventBusSubscriber(value = Dist.CLIENT)` for client-only code
+- Use `@Mod.EventBusSubscriber(value = Dist.DEDICATED_SERVER)` for server-only code
+- Common setup goes in `FMLCommonSetupEvent`
+
+### Thread Safety
+- **CRITICAL**: All Minecraft API calls must be on the main thread
+- Use `event.enqueueWork()` for main thread operations
+- Never block the main thread with long-running operations
+
+## Configuration
+
+Configuration is managed through Forge's `ForgeConfigSpec` system in [SuperAIConfig.java](mdc:src/main/java/com/supermc/ai/config/SuperAIConfig.java):
+
+- Register config with `context.registerConfig(ModConfig.Type.COMMON, spec)`
+- Use `ForgeConfigSpec.Builder` to define config values
+- Provide sensible defaults and validation
+- Config files are in `config/superai.toml`
+
+## Logging
+
+- Use `LogUtils.getLogger()` from Mojang's logging utilities
+- Log at appropriate levels:
+  - ERROR: Critical failures
+  - WARN: Recoverable issues
+  - INFO: Important state changes
+  - DEBUG: Detailed debugging information
+
+## Resource Management
+
+- Resources are in `src/main/resources/`
+- `META-INF/mods.toml` - Mod metadata (required)
+- `pack.mcmeta` - Resource pack metadata
+
+## Build Configuration
+
+The build is configured in [build.gradle](mdc:build.gradle):
+- Uses ForgeGradle plugin
+- Java 21 toolchain
+- Protobuf plugin for gRPC code generation
+- Dependencies include Forge, gRPC, and testing frameworks
+
+## Testing
+
+- Use Forge's GameTest framework for integration tests
+- Run tests with `./gradlew gameTestServer`
+- Unit tests go in `src/test/java/`
+
+## Version Compatibility
+
+- Target Minecraft 1.21.10
+- Forge version 60.0.14
+- Java 21 required
+- Check [gradle.properties](mdc:gradle.properties) for version numbers
+
+## Common Patterns
+
+### Accessing Minecraft Instance
+```java
+// Client side
+Minecraft mc = Minecraft.getInstance();
+mc.execute(() -> {
+    // Main thread operations
+});
+
+// Server side
+MinecraftServer server = ...;
+server.execute(() -> {
+    // Main thread operations
+});
+```
+
+### Getting World
+```java
+// Client
+ClientLevel level = mc.level;
+
+// Server
+ServerLevel level = server.overworld();
+```

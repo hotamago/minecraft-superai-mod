@@ -1,0 +1,58 @@
+---
+alwaysApply: true
+description: Project structure and architecture overview for SuperAI Minecraft Bot
+---
+
+# SuperAI Minecraft Bot - Project Structure
+
+## Project Overview
+This is a Minecraft Forge mod that provides a gRPC API for AI agents to interact with Minecraft. The main entry point is [SuperAIMod.java](mdc:src/main/java/com/supermc/ai/SuperAIMod.java).
+
+## Package Structure
+
+The project follows a modular architecture:
+
+- **`com.supermc.ai`** - Root package
+  - **`common/`** - Shared utilities, constants ([SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java)), and exceptions ([SuperAIException.java](mdc:src/main/java/com/supermc/ai/common/SuperAIException.java))
+  - **`config/`** - Configuration management ([SuperAIConfig.java](mdc:src/main/java/com/supermc/ai/config/SuperAIConfig.java))
+  - **`grpc/`** - gRPC service implementations
+    - `service/` - Core gRPC services (EnvironmentService, PlayerControlService, InventoryService, AIAgentService)
+    - `proto/` - Generated protobuf classes
+    - `interceptor/` - gRPC interceptors
+  - **`environment/`** - Environment perception system
+    - `scanner/` - World scanning logic
+    - `analyzer/` - Environment analysis
+    - `cache/` - Environment data caching
+  - **`player/`** - Player control system
+    - `controller/` - Player action control
+    - `state/` - Player state management
+    - `inventory/` - Inventory management
+
+## Key Files
+
+- **Main Mod Class**: [SuperAIMod.java](mdc:src/main/java/com/supermc/ai/SuperAIMod.java) - Entry point, initializes all systems
+- **Configuration**: [SuperAIConfig.java](mdc:src/main/java/com/supermc/ai/config/SuperAIConfig.java) - Forge config spec with all settings
+- **Constants**: [SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java) - All constant values
+- **Proto Definition**: [superai.proto](mdc:src/main/proto/superai.proto) - gRPC API contract
+- **Build Config**: [build.gradle](mdc:build.gradle) - Gradle build configuration with protobuf plugin
+
+## Development Guidelines
+
+See [DEVELOPMENT_RULES.md](mdc:DEVELOPMENT_RULES.md) for comprehensive development guidelines including:
+- Architecture principles (SOLID, DRY, KISS)
+- Naming conventions
+- Threading and concurrency rules
+- Testing strategy
+- Security considerations
+
+## Configuration
+
+Configuration is managed through Forge's config system. All config values are defined in [SuperAIConfig.java](mdc:src/main/java/com/supermc/ai/config/SuperAIConfig.java) and can be modified in `config/superai.toml` at runtime.
+
+## gRPC Services
+
+The mod exposes four main gRPC services defined in [superai.proto](mdc:src/main/proto/superai.proto):
+1. **EnvironmentService** - World scanning and perception
+2. **PlayerControlService** - Player action execution
+3. **InventoryService** - Inventory management
+4. **AIAgentService** - Agent registration and management

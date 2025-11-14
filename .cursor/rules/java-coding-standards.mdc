@@ -1,0 +1,77 @@
+---
+globs: *.java
+description: Java coding standards and conventions for SuperAI Minecraft Bot
+---
+
+# Java Coding Standards
+
+## Naming Conventions
+
+- **Classes**: PascalCase (e.g., `EnvironmentScanner`, `PlayerController`)
+- **Methods**: camelCase (e.g., `scanEnvironment()`, `executeAction()`)
+- **Variables**: camelCase (e.g., `playerPosition`, `blockState`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_CONNECTIONS`, `DEFAULT_TIMEOUT`)
+- **Packages**: lowercase with dots (e.g., `com.supermc.ai.grpc`)
+
+## Code Quality
+
+### Java Best Practices
+- Use Java 21 features appropriately (records, pattern matching, sealed classes)
+- Prefer immutable objects where possible
+- Use `Optional` for nullable return values
+- Avoid null checks with proper null-safety patterns
+- Use `final` for fields that shouldn't be reassigned
+
+### Documentation
+- All public APIs must have JavaDoc comments
+- Complex business logic must have inline comments
+- Method contracts should be clearly documented (preconditions, postconditions, exceptions)
+- Follow the existing JavaDoc style in [SuperAIMod.java](mdc:src/main/java/com/supermc/ai/SuperAIMod.java)
+
+### Error Handling
+- Use custom exceptions from `com.supermc.ai.common.SuperAIException` hierarchy
+- Log errors with appropriate levels (ERROR, WARN, INFO, DEBUG) using `LogUtils.getLogger()`
+- Never swallow exceptions without proper handling
+- Use try-with-resources for resource management
+- Include error codes from [SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java)
+
+### Constants
+- All constants should be defined in [SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java)
+- Use constants instead of magic numbers or strings
+- Reference constants from the constants class rather than duplicating values
+
+### Configuration
+- Access configuration values through [SuperAIConfig.java](mdc:src/main/java/com/supermc/ai/config/SuperAIConfig.java)
+- Never hardcode configuration values
+- Validate configuration on startup
+
+## Class Structure
+
+### Final Classes
+- Utility classes and constants classes should be `final` with private constructors
+- See [SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java) for example
+
+### Exception Classes
+- All custom exceptions should extend [SuperAIException.java](mdc:src/main/java/com/supermc/ai/common/SuperAIException.java)
+- Include error codes from SuperAIConstants
+- Provide context information when available
+
+## Threading & Concurrency
+
+### Minecraft Thread Safety
+- **CRITICAL**: All Minecraft API calls must be on the main thread
+- Use `Minecraft.getInstance().execute()` for main thread operations
+- Implement proper synchronization for shared state
+- Avoid blocking operations on main thread
+
+### gRPC Threading
+- Use appropriate thread pools for gRPC services
+- Implement proper cancellation handling
+- Use reactive patterns for async operations
+
+## Testing
+
+- Write unit tests for all business logic
+- Use JUnit 5 with AssertJ for assertions
+- Mock external dependencies (Minecraft API, network calls)
+- Aim for >80% code coverage

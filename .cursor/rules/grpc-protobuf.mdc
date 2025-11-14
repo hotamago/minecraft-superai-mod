@@ -1,0 +1,77 @@
+---
+globs: *.proto
+description: gRPC and Protocol Buffers guidelines for SuperAI Minecraft Bot
+---
+
+# gRPC and Protocol Buffers Guidelines
+
+## Proto File Structure
+
+The main proto definition is in [superai.proto](mdc:src/main/proto/superai.proto). This file defines the complete API contract for AI agents.
+
+## Service Design Principles
+
+### Service Organization
+- Each service handles a specific domain (Environment, Player, Inventory, AIAgent)
+- Services should be stateless where possible
+- Use streaming for real-time data (environment updates, player state)
+
+### Message Design
+- Keep messages small and focused
+- Use enums for fixed sets of values (see `PlayerAction`, `BlockType`, `ItemType`)
+- Include error fields in response messages (`success`, `error_message`)
+- Use `google.protobuf.Timestamp` for time values
+- Use `google.protobuf.Empty` for requests/responses with no parameters
+
+### Naming Conventions
+- **Services**: PascalCase with "Service" suffix (e.g., `EnvironmentService`)
+- **Messages**: PascalCase (e.g., `EnvironmentScanRequest`, `PlayerState`)
+- **Fields**: snake_case (e.g., `player_name`, `max_blocks`)
+- **Enums**: PascalCase (e.g., `PlayerAction`, `BlockType`)
+
+## Request/Response Pattern
+
+All service methods should follow this pattern:
+- Request message: `{ServiceName}{MethodName}Request` (e.g., `EnvironmentScanRequest`)
+- Response message: `{ServiceName}{MethodName}Response` (e.g., `EnvironmentScanResponse`)
+- Response messages should include:
+  - `bool success` - Operation success status
+  - `string error_message` - Error description if failed
+  - Result data fields
+
+## Common Types
+
+Reusable message types are defined at the top of [superai.proto](mdc:src/main/proto/superai.proto):
+- `Position` - 3D coordinates (x, y, z)
+- `Rotation` - Look direction (yaw, pitch)
+- `BlockInfo` - Block information
+- `EntityInfo` - Entity information
+- `ItemInfo` - Item information
+- `PlayerState` - Complete player state
+- `EnvironmentScan` - Environment scan results
+
+## Code Generation
+
+Proto files are compiled using the protobuf Gradle plugin configured in [build.gradle](mdc:build.gradle). Generated code is placed in `build/generated/source/proto/main/java/com/supermc/ai/grpc/proto/`.
+
+## Service Implementation
+
+gRPC services are implemented in `com.supermc.ai.grpc.service`:
+- Services should validate all inputs
+- Use configuration from [SuperAIConfig.java](mdc:src/main/java/com/supermc/ai/config/SuperAIConfig.java)
+- Handle errors using [SuperAIException](mdc:src/main/java/com/supermc/ai/common/SuperAIException.java) hierarchy
+- Log operations appropriately
+
+## Performance Considerations
+
+- Implement connection pooling
+- Use compression for large messages
+- Implement proper timeout handling
+- Cache frequently accessed data
+- Use streaming for large or continuous data
+
+## Versioning
+
+- Include version fields in messages for API evolution
+- Maintain backward compatibility where possible
+- Document breaking changes

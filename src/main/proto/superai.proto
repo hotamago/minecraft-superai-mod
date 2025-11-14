@@ -1,0 +1,454 @@
+syntax = "proto3";
+
+package com.supermc.ai;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// SuperAI Minecraft Bot gRPC Service Definitions
+// This file defines the API contract for AI agents to interact with Minecraft
+
+option java_multiple_files = true;
+option java_package = "com.supermc.ai.grpc.proto";
+option java_outer_classname = "SuperAIProto";
+
+// ============================================================================
+// Common Types and Enums
+// ============================================================================
+
+enum PlayerAction {
+  PLAYER_ACTION_UNSPECIFIED = 0;
+  MOVE_FORWARD = 1;
+  MOVE_BACKWARD = 2;
+  MOVE_LEFT = 3;
+  MOVE_RIGHT = 4;
+  JUMP = 5;
+  SNEAK = 6;
+  SPRINT = 7;
+  LOOK_UP = 8;
+  LOOK_DOWN = 9;
+  LOOK_LEFT = 10;
+  LOOK_RIGHT = 11;
+  ATTACK = 12;
+  USE_ITEM = 13;
+  DROP_ITEM = 14;
+  OPEN_INVENTORY = 15;
+  CLOSE_INVENTORY = 16;
+  SELECT_SLOT = 17;
+}
+
+enum BlockType {
+  BLOCK_TYPE_UNSPECIFIED = 0;
+  AIR = 1;
+  STONE = 2;
+  GRASS = 3;
+  DIRT = 4;
+  WOOD = 5;
+  LEAVES = 6;
+  WATER = 7;
+  LAVA = 8;
+  SAND = 9;
+  GRAVEL = 10;
+  ORE = 11;
+  MINERAL = 12;
+  PLANT = 13;
+  FLOWER = 14;
+  CROP = 15;
+  SOIL = 16;
+  LOG = 17;
+  SAPLING = 18;
+  WOOL = 19;
+  CLOTH = 20;
+  GLASS = 21;
+  BOOKSHELF = 22;
+  TNT = 23;
+  OBSIDIAN = 24;
+  PORTAL = 25;
+  CAKE = 26;
+  BED = 27;
+  RAIL = 28;
+  LADDER = 29;
+  LEVER = 30;
+  DOOR = 31;
+  TRAPDOOR = 32;
+  FENCE = 33;
+  STAIRS = 34;
+  SLAB = 35;
+  WALL = 36;
+  CHEST = 37;
+  FURNACE = 38;
+  CRAFTING_TABLE = 39;
+  SIGN = 40;
+  TORCH = 41;
+  FIRE = 42;
+  SPAWNER = 43;
+  UNKNOWN = 999;
+}
+
+enum ItemType {
+  ITEM_TYPE_UNSPECIFIED = 0;
+  TOOL = 1;
+  WEAPON = 2;
+  ARMOR = 3;
+  FOOD = 4;
+  MATERIAL = 5;
+  BLOCK = 6;
+  POTION = 7;
+  ENCHANTMENT = 8;
+  BOOK = 9;
+  MISC = 10;
+}
+
+message Position {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Rotation {
+  float yaw = 1;   // Horizontal rotation (-180 to 180)
+  float pitch = 2; // Vertical rotation (-90 to 90)
+}
+
+message BlockInfo {
+  Position position = 1;
+  BlockType type = 2;
+  string block_id = 3;     // Minecraft block identifier
+  string block_name = 4;   // Human-readable name
+  map<string, string> properties = 5; // Block state properties
+  bool is_solid = 6;
+  bool is_liquid = 7;
+  float hardness = 8;
+}
+
+message EntityInfo {
+  string entity_id = 1;
+  string entity_type = 2;
+  Position position = 3;
+  Rotation rotation = 4;
+  double health = 5;
+  double max_health = 6;
+  bool is_alive = 7;
+  map<string, string> attributes = 8;
+}
+
+message ItemInfo {
+  string item_id = 1;
+  string item_name = 2;
+  ItemType type = 3;
+  int32 count = 4;
+  int32 max_stack_size = 5;
+  int32 damage = 6;
+  int32 max_damage = 7;
+  map<string, string> properties = 8;
+  bool is_enchantable = 9;
+}
+
+message PlayerState {
+  string player_name = 1;
+  Position position = 2;
+  Rotation rotation = 3;
+  double health = 4;
+  double max_health = 5;
+  double food_level = 6;
+  double saturation = 7;
+  int32 experience_level = 8;
+  float experience_progress = 9;
+  bool is_sneaking = 10;
+  bool is_sprinting = 11;
+  bool is_on_ground = 12;
+  bool is_flying = 13;
+  repeated ItemInfo inventory = 14;
+  ItemInfo held_item = 15;
+  int32 selected_slot = 16;
+}
+
+message EnvironmentScan {
+  Position center = 1;
+  int32 radius = 2;
+  repeated BlockInfo blocks = 3;
+  repeated EntityInfo entities = 4;
+  google.protobuf.Timestamp scan_time = 5;
+  string dimension = 6; // overworld, nether, end
+  bool include_air_blocks = 7;
+  int32 max_blocks = 8;
+  int32 max_entities = 9;
+}
+
+// ============================================================================
+// Service Definitions
+// ============================================================================
+
+// Environment Service - Provides world scanning and perception capabilities
+service EnvironmentService {
+  // Scan the environment around a position
+  rpc ScanEnvironment(EnvironmentScanRequest) returns (EnvironmentScanResponse);
+
+  // Stream continuous environment updates
+  rpc StreamEnvironmentUpdates(EnvironmentUpdateRequest) returns (stream EnvironmentScan);
+
+  // Get detailed information about a specific block
+  rpc GetBlockInfo(BlockInfoRequest) returns (BlockInfoResponse);
+
+  // Get detailed information about a specific entity
+  rpc GetEntityInfo(EntityInfoRequest) returns (EntityInfoResponse);
+}
+
+// Player Control Service - Allows AI agents to control player actions
+service PlayerControlService {
+  // Execute a single player action
+  rpc ExecuteAction(PlayerActionRequest) returns (PlayerActionResponse);
+
+  // Execute multiple actions in sequence
+  rpc ExecuteActionSequence(PlayerActionSequenceRequest) returns (PlayerActionSequenceResponse);
+
+  // Get current player state
+  rpc GetPlayerState(google.protobuf.Empty) returns (PlayerStateResponse);
+
+  // Stream player state updates
+  rpc StreamPlayerState(PlayerStateStreamRequest) returns (stream PlayerState);
+
+  // Move player to specific position
+  rpc MoveToPosition(MoveToPositionRequest) returns (MoveToPositionResponse);
+}
+
+// Inventory Service - Manages player inventory operations
+service InventoryService {
+  // Get current inventory contents
+  rpc GetInventory(google.protobuf.Empty) returns (InventoryResponse);
+
+  // Use item in specific slot
+  rpc UseItem(UseItemRequest) returns (UseItemResponse);
+
+  // Drop item from specific slot
+  rpc DropItem(DropItemRequest) returns (DropItemResponse);
+
+  // Move item between slots
+  rpc MoveItem(MoveItemRequest) returns (MoveItemResponse);
+
+  // Craft item using recipe
+  rpc CraftItem(CraftItemRequest) returns (CraftItemResponse);
+}
+
+// AI Agent Service - Main service for AI agent registration and management
+service AIAgentService {
+  // Register an AI agent with the system
+  rpc RegisterAgent(RegisterAgentRequest) returns (RegisterAgentResponse);
+
+  // Unregister an AI agent
+  rpc UnregisterAgent(UnregisterAgentRequest) returns (UnregisterAgentResponse);
+
+  // Get list of active AI agents
+  rpc GetActiveAgents(google.protobuf.Empty) returns (ActiveAgentsResponse);
+
+  // Send heartbeat to keep agent alive
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+// ============================================================================
+// Request/Response Messages
+// ============================================================================
+
+// Environment Service Messages
+message EnvironmentScanRequest {
+  Position center = 1;
+  int32 radius = 2;
+  bool include_air_blocks = 3;
+  bool include_entities = 4;
+  int32 max_blocks = 5;
+  int32 max_entities = 6;
+}
+
+message EnvironmentScanResponse {
+  EnvironmentScan scan = 1;
+  string error_message = 2;
+  bool success = 3;
+}
+
+message EnvironmentUpdateRequest {
+  Position center = 1;
+  int32 radius = 2;
+  int32 update_interval_ms = 3; // How often to send updates
+  bool include_air_blocks = 4;
+  bool include_entities = 5;
+}
+
+message BlockInfoRequest {
+  Position position = 1;
+}
+
+message BlockInfoResponse {
+  BlockInfo block = 1;
+  string error_message = 2;
+  bool success = 3;
+}
+
+message EntityInfoRequest {
+  string entity_id = 1;
+}
+
+message EntityInfoResponse {
+  EntityInfo entity = 1;
+  string error_message = 2;
+  bool success = 3;
+}
+
+// Player Control Service Messages
+message PlayerActionRequest {
+  PlayerAction action = 1;
+  map<string, string> parameters = 2; // Action-specific parameters
+}
+
+message PlayerActionResponse {
+  bool success = 1;
+  string error_message = 2;
+  PlayerState new_state = 3;
+}
+
+message PlayerActionSequenceRequest {
+  repeated PlayerAction actions = 1;
+  int32 delay_between_actions_ms = 2;
+}
+
+message PlayerActionSequenceResponse {
+  bool success = 1;
+  string error_message = 2;
+  repeated PlayerActionResult results = 3;
+}
+
+message PlayerActionResult {
+  PlayerAction action = 1;
+  bool success = 2;
+  string error_message = 3;
+}
+
+message PlayerStateResponse {
+  PlayerState state = 1;
+  string error_message = 2;
+  bool success = 3;
+}
+
+message PlayerStateStreamRequest {
+  int32 update_interval_ms = 1;
+}
+
+message MoveToPositionRequest {
+  Position target_position = 1;
+  bool pathfind = 2; // Use pathfinding to reach position
+  double speed = 3;  // Movement speed multiplier
+}
+
+message MoveToPositionResponse {
+  bool success = 1;
+  string error_message = 2;
+  repeated Position path = 3; // Path taken (if pathfinding was used)
+}
+
+// Inventory Service Messages
+message InventoryResponse {
+  repeated ItemInfo items = 1;
+  int32 selected_slot = 2;
+  string error_message = 3;
+  bool success = 4;
+}
+
+message UseItemRequest {
+  int32 slot = 1;
+  bool consume_item = 2;
+}
+
+message UseItemResponse {
+  bool success = 1;
+  string error_message = 2;
+  ItemInfo updated_item = 3;
+}
+
+message DropItemRequest {
+  int32 slot = 1;
+  int32 count = 2;
+}
+
+message DropItemResponse {
+  bool success = 1;
+  string error_message = 2;
+  ItemInfo remaining_item = 3;
+}
+
+message MoveItemRequest {
+  int32 from_slot = 1;
+  int32 to_slot = 2;
+  int32 count = 3;
+}
+
+message MoveItemResponse {
+  bool success = 1;
+  string error_message = 2;
+  ItemInfo moved_item = 3;
+}
+
+message CraftItemRequest {
+  string recipe_id = 1;
+  int32 count = 2;
+  repeated ItemInfo ingredients = 3;
+}
+
+message CraftItemResponse {
+  bool success = 1;
+  string error_message = 2;
+  ItemInfo crafted_item = 3;
+}
+
+// AI Agent Service Messages
+message RegisterAgentRequest {
+  string agent_id = 1;
+  string agent_name = 2;
+  string agent_type = 3; // e.g., "reinforcement_learning", "behavior_tree"
+  string description = 4;
+  map<string, string> capabilities = 5;
+  int32 heartbeat_interval_ms = 6;
+}
+
+message RegisterAgentResponse {
+  bool success = 1;
+  string error_message = 2;
+  string session_token = 3;
+  google.protobuf.Timestamp registered_at = 4;
+}
+
+message UnregisterAgentRequest {
+  string agent_id = 1;
+  string session_token = 2;
+}
+
+message UnregisterAgentResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message ActiveAgentsResponse {
+  repeated AgentInfo agents = 1;
+  string error_message = 2;
+  bool success = 3;
+}
+
+message AgentInfo {
+  string agent_id = 1;
+  string agent_name = 2;
+  string agent_type = 3;
+  string description = 4;
+  google.protobuf.Timestamp registered_at = 5;
+  google.protobuf.Timestamp last_heartbeat = 6;
+  bool is_active = 7;
+  map<string, string> capabilities = 8;
+}
+
+message HeartbeatRequest {
+  string agent_id = 1;
+  string session_token = 2;
+}
+
+message HeartbeatResponse {
+  bool success = 1;
+  string error_message = 2;
+  google.protobuf.Timestamp server_time = 3;
+}

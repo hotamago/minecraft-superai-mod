@@ -1,0 +1,86 @@
+---
+globs: *.java
+description: Error handling patterns and exception usage
+---
+
+# Error Handling Guidelines
+
+## Exception Hierarchy
+
+All custom exceptions should extend [SuperAIException.java](mdc:src/main/java/com/supermc/ai/common/SuperAIException.java), which provides:
+- Error codes from [SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java)
+- Context information for debugging
+- Formatted error messages
+
+## Exception Types
+
+Use `SuperAIExceptions` (from [SuperAIException.java](mdc:src/main/java/com/supermc/ai/common/SuperAIException.java)) for specific error types:
+- `ConfigurationException` - Configuration validation failures
+- `GrpcServiceException` - gRPC service errors
+- Other exception types as needed
+
+## Error Codes
+
+Error codes are defined in [SuperAIConstants.java](mdc:src/main/java/com/supermc/ai/common/SuperAIConstants.java):
+- `ERROR_SUCCESS = 0` - Successful operation
+- `ERROR_INVALID_PARAMETER = 1001` - Invalid input parameters
+- `ERROR_OPERATION_NOT_ALLOWED = 1002` - Operation not permitted
+- `ERROR_RESOURCE_NOT_FOUND = 1003` - Resource not found
+- `ERROR_TIMEOUT = 1004` - Operation timeout
+- `ERROR_INTERNAL_ERROR = 1005` - Internal server error
+- `ERROR_AUTHENTICATION_FAILED = 1006` - Authentication failure
+- `ERROR_RATE_LIMIT_EXCEEDED = 1007` - Rate limit exceeded
+- `ERROR_AGENT_NOT_REGISTERED = 1008` - Agent not registered
+- `ERROR_INVALID_AGENT_STATE = 1009` - Invalid agent state
+
+## Best Practices
+
+### Throwing Exceptions
+- Always include a descriptive error message
+- Include the appropriate error code
+- Provide context when available (e.g., parameter values, state information)
+- Use the most specific exception type
+
+### Catching Exceptions
+- Catch specific exception types, not generic `Exception`
+- Log exceptions with appropriate level before rethrowing
+- Never swallow exceptions silently
+- Use try-with-resources for resource management
+
+### Logging
+- Log errors with `LOGGER.error()` before throwing
+- Include exception stack traces in logs
+- Use structured logging with context information
+- Example from [SuperAIMod.java](mdc:src/main/java/com/supermc/ai/SuperAIMod.java):
+  ```java
+  LOGGER.error("Failed to initialize SuperAI mod", e);
+  ```
+
+### gRPC Error Handling
+- Convert exceptions to gRPC status codes
+- Include error messages in response messages
+- Set `success = false` in response messages
+- Provide user-friendly error messages
+
+### Configuration Validation
+- Validate configuration in [SuperAIConfig.java](mdc:src/main/java/com/supermc/ai/config/SuperAIConfig.java)
+- Throw `ConfigurationException` for invalid config
+- Validate on startup, not at runtime
+
+## Example Pattern
+
+```java
+try {
+    // Operation
+} catch (SuperAIException e) {
+    LOGGER.error("Operation failed: {}", e.getDetailedMessage(), e);
+    throw e;
+} catch (Exception e) {
+    LOGGER.error("Unexpected error during operation", e);
+    throw new SuperAIExceptions.InternalException(
+        "Unexpected error: " + e.getMessage(),
+        e,
+        SuperAIConstants.ERROR_INTERNAL_ERROR
+    );
+}
+```
